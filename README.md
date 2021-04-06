@@ -2,7 +2,7 @@
 
 ## Описание проекта
 
-Необходимо разработать сайт-агрегатор объявлений гостиниц. Также должно быть реализовано бронирование гостиницы на диапазон дат
+Необходимо разработать бэкэнд для сайта-агрегатора объявлений гостиниц. Также должно быть реализовано бронирование гостиницы на диапазон дат
 
 ## Цель
 
@@ -18,6 +18,14 @@
 ## Допущения
 
 Оплату бронирования реализовывать не нужно
+
+## Глоссарий
+
+В данном документе приводятся различные описание интерфейсов и типов. Для упрощения описания общие типы приводятся в данном разделе
+
+```ts
+type ID = string | ObjectId;
+```
 
 ## 1. Описание базовых модулей
 
@@ -49,7 +57,7 @@
 ```ts
 interface IUserService {
   create(data: Partial<User>): Promise<User>;
-  findById(id: ObjectId): Promise<User>;
+  findById(id: ID): Promise<User>;
   findByEmail(email: string): Promise<User>;
 }
 ```
@@ -95,18 +103,18 @@ interface IUserService {
 ```ts
 interface IHotelService {
   create(data: any): Promise<Hotel>;
-  findById(id: string | ObjectId): Promise<Hotel>;
+  findById(id: ID): Promise<Hotel>;
   search(params: Pick<Hotel, "title" | "tags">): Promise<Hotel[]>;
 }
 
 interface HotelRoomService {
   create(data: Partial<HotelRoom>): Promise<HotelRoom>;
-  findById(id: string | ObjectId): Promise<HotelRoom>;
+  findById(id: ID): Promise<HotelRoom>;
   search(
     params: Pick<HotelRoom, "title" | "tags" | "isEnabled">
   ): Promise<HotelRoom[]>;
 
-  update(id: string | ObjectId, data: Partial<HotelRoom>): Promise<HotelRoom>;
+  update(id: ID, data: Partial<HotelRoom>): Promise<HotelRoom>;
 }
 ```
 
@@ -136,9 +144,9 @@ interface HotelRoomService {
 
 ```ts
 interface IFavorites {
-  addFavorites(user: ObjectId, hotel: ObjectId): Promise<void>;
-  removeFavorites(user: ObjectId, hotel: ObjectId): Promise<void>;
-  getFavorites(user: ObjectId): Promise<ObjectId[]>;
+  addFavorites(user: ID, hotel: ID): Promise<void>;
+  removeFavorites(user: ID, hotel: ID): Promise<void>;
+  getFavorites(user: ID): Promise<ObjectId[]>;
 }
 ```
 
@@ -161,15 +169,14 @@ interface IFavorites {
 
 Модель данных `Reservation` должна содержать следующие поля:
 
-| название |    тип     | обязательное | уникальное | по умолчанию |
-| -------- | :--------: | :----------: | :--------: | :----------: |
-| \_id     | `ObjectId` |      да      |     да     |              |
-| userId   | `ObjectId` |      да      |    нет     |              |
-| hotelId  | `ObjectId` |      да      |    нет     |              |
-| roomId   | `ObjectId` |      да      |    нет     |              |
-| date     |   `Date`   |      да      |    нет     |              |
-
-<!-- Подумать про диапазон дат -->
+| название  |    тип     | обязательное | уникальное | по умолчанию |
+| --------- | :--------: | :----------: | :--------: | :----------: |
+| \_id      | `ObjectId` |      да      |     да     |              |
+| userId    | `ObjectId` |      да      |    нет     |              |
+| hotelId   | `ObjectId` |      да      |    нет     |              |
+| roomId    | `ObjectId` |      да      |    нет     |              |
+| dateStart |   `Date`   |      да      |    нет     |              |
+| dateEnd   |   `Date`   |      да      |    нет     |              |
 
 ---
 
@@ -177,17 +184,24 @@ interface IFavorites {
 
 ```ts
 interface ReservationDto {
-  user: ObjectId;
-  hotel: ObjectId;
-  room: ObjectId;
-  date: Date;
+  user: ID;
+  hotel: ID;
+  room: ID;
+  dateStart: Date;
+  dateEnd: Date;
+}
+
+interface ReservationSearchOptions {
+  user: ID;
+  dateStart: Date;
+  dateEnd: Date;
 }
 interface IReservation {
   addReservation(data: ReservationDto): Promise<Reservation>;
-  removeReservation(data: ReservationDto): Promise<void>;
+  removeReservation(id: ID): Promise<void>;
   getReservations(
-    filter: Pick<ResercationDto, "user" | "date">
-  ): Promise<Array<Pick<ResercationDto, "hotel" | "room">>>;
+    filter: ReservationSearchOptions
+  ): Promise<Array<Reservation>>;
 }
 ```
 
@@ -226,15 +240,15 @@ interface IReservation {
 
 ```ts
 interface SendMessageDto {
-  author: ObjectId;
-  receiver: ObjectId;
+  author: ID;
+  receiver: ID;
   text: string;
 }
 
 interface IChat {
-  findChat(users: [ObjectId, Objectid]): Promise<Chat | null>;
+  findChat(users: [ID, ID]): Promise<Chat | null>;
   sendMessage(data: SendMessageDto): Promise<Message>;
-  getHistory(chatId: ObejctId): Promise<Message[]>;
+  getHistory(chatId: ID): Promise<Message[]>;
   subscribe(handler: (chat: Chat, message: Message) => void): () => void;
 }
 ```
