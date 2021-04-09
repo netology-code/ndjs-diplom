@@ -55,10 +55,18 @@ type ID = string | ObjectId;
 Модуль "Пользователи" должен быть реализован в виде NestJS модуля и экспортировать сервисы со следующими интерфейсами
 
 ```ts
+interface SearchUserParams {
+  limit: number;
+  offset: number;
+  email: string;
+  name: string;
+  contactPhone: string;
+}
 interface IUserService {
   create(data: Partial<User>): Promise<User>;
   findById(id: ID): Promise<User>;
   findByEmail(email: string): Promise<User>;
+  findAll(params: SearchUserParams): Promoise<User[]>;
 }
 ```
 
@@ -67,6 +75,8 @@ interface IUserService {
 - `client`
 - `admin`
 - `manager`
+
+При поиске `IUserService.findAll()` поля `email`, `name` и `contactPhone` должны проверяться на частичное совпадение.
 
 ### 1.2 Модуль "Гостиницы"
 
@@ -197,6 +207,7 @@ interface IReservation {
 | users     | [`ObjectId`, `ObjectId`] |      да      |    нет     |
 | createdAt |          `Date`          |      да      |    нет     |
 | messages  |       `Message[]`        |     нет      |    нет     |
+| isActive  |          `bool`          |     нет      |    нет     |
 
 Модель сообщения `Message` должна содержать следующие поля:
 
@@ -217,37 +228,35 @@ interface IReservation {
 ```ts
 interface SendMessageDto {
   author: ID;
-  receiver: ID;
+  chat: ID;
   text: string;
 }
 
+interface GetChatListParams {
+  user: ID | null;
+  isActive: bool;
+}
+
 interface IChat {
-  findChat(users: [ID, ID]): Promise<Chat | null>;
+  findChatBetween(users: [ID, ID]): Promise<Chat | null>;
+  findChatList(params: GetChatListParams): Promise<Chat | null>;
   sendMessage(data: SendMessageDto): Promise<Message>;
   getHistory(chatId: ID): Promise<Message[]>;
+  getUnreadCount(chatId: ID, userId: ID): Promise<Message[]>;
+  closeChat(chatId: ID): Promise<void>;
   subscribe(handler: (chat: Chat, message: Message) => void): () => void;
 }
 ```
 
 ---
 
-1. При отправке сообщения нужно
-
-   1. Найти чат между `author` и `receiver` по полю `Chat.users`. Если чата нет, то создать
-   1. Добавить в поле `Chat.messages` новое сообщение `Message`. Поле `sentAt` должно соответствовать текущей дате
-
 1. Оповещения в должны быть реализованы через механизм `EventEmitter`
-
-<!-- @TODO отсюда и дальше -->
 
 ## 2. Описание модулей WEB API
 
-### 2.1 API Модуля "Гостиницы"
+## 2.1 API Модуля "Гостиницы"
 
-Должно быть оформлено в виде отдельного NestJS модуля с контроллерами:
-
-- `HotelsController` - работа с гостиницами
-- `HotelRoomsController` - работа с номерами гостиницами
+Должно быть оформлено в виде отдельного NestJS модуля
 
 ### **Ограничения**
 
@@ -262,7 +271,7 @@ interface IChat {
 #### **Адрес**
 
 ```http
-GET /api/hotel-rooms
+GET /api/common/hotel-rooms
 ```
 
 #### **Query параметры**
@@ -300,7 +309,7 @@ GET /api/hotel-rooms
 #### **Адрес**
 
 ```http
-GET /api/hotel-rooms/:id
+GET /api/common/hotel-rooms/:id
 ```
 
 #### **Query параметры**
@@ -548,10 +557,7 @@ images[]: File | string
 
 ### 2.2 API Модуля "Бронирование"
 
-Должно быть оформлено в виде отдельного NestJS модуля с контроллерами:
-
-- `ClientReservationsController`
-- `ManagerReservationsController`
+Должно быть оформлено в виде отдельного NestJS модуля
 
 ### **2.2.1 Бронирование номера клиентом**
 
@@ -562,7 +568,7 @@ images[]: File | string
 #### **Адрес**
 
 ```http
-POST /api/reservations
+POST /api/client/reservations
 ```
 
 #### **Body параметры**
@@ -612,7 +618,7 @@ POST /api/reservations
 #### **Адрес**
 
 ```http
-GET /api/reservations
+GET /api/client/reservations
 ```
 
 #### **Формат ответа**
@@ -653,7 +659,7 @@ GET /api/reservations
 #### **Адрес**
 
 ```http
-DELETE /api/reservations/:id
+DELETE /api/client/reservations/:id
 ```
 
 #### **Формат ответа**
@@ -738,35 +744,379 @@ DELETE /api/manager/reservations/:userId/:reservationId
 - `403` - если роль пользователя не `manager`
 - `400` - если бронь с указанным ID для пользователя с указанным ID не существует
 
-## 2.3 Аутентификация и авторизация
+## 2.3 API Модуля "Аутентификация и авторизация"
+
+Должно быть оформлено в виде отдельного NestJS модуля
 
 Модуль "Аутентификация и авторизация" предназначен
 
 - для управления сессией пользователя
+- для регистрации пользователей
 
 Хранение сессии должно реализовываться посредством библиотеки passportjs с хранением сессии в памяти приложения
 
 Аутентификация пользователя производится с помощью модуля "Пользователи". Каждому пользователю назначается одна из ролей - клиент, администратор, консультант
 
-HTTP API модуля "Аутентификация и авторизация" должно включать следующие точки доступа
+### **2.3.1 Вход**
 
-- вход - создание сессии пользователя, установка cookies
-- выход - завершение сессии пользователя
-- регистрация - создание пользователя с ролью клиент
+#### **Описание**
 
-Помимо HTTP API нужно разработать функции проверки сессии пользователя для доступа к приватным ресурсам
-API аутентификации должен использовать Модуль Аутентификация
+Стартует сессию пользователя и выставляет Cookie
 
-# ОСТАЛОСЬ!
+#### **Адрес**
 
-## 3. API "Пользователя"
+```http
+POST /api/auth/login
+```
 
-- чат с консультантом (требование: обмен с сообщениями производится через websocket)
+#### **Body параметры**
 
-## 5. API консультанта
+```json
+{
+  "email": string,
+  "password": string
+}
+```
 
-API консультанта должно включать:
+#### **Формат ответа**
 
-- Просмотр списка всех пользователей
-- Просмотр списка чатов (допущение: любой консультант может ответить в любом чате)
-- Чат с пользователем (требование: обмен с сообщениями производится через websocket)
+```json
+{
+  "email": string,
+  "password": string,
+  "name": string,
+  "contactPhone": string
+}
+```
+
+#### **Доступ**
+
+Доступно только не аутентифицированным пользователям
+
+#### **Ошибки**
+
+- `401` - если пользователь с указанным email не существет или пароль неверный
+
+### **2.3.2 Выход**
+
+#### **Описание**
+
+Завершает сессию пользователя и удаляет Cookie
+
+#### **Адрес**
+
+```http
+POST /api/auth/logout
+```
+
+#### **Формат ответа**
+
+Пустой ответ
+
+#### **Доступ**
+
+Доступно только аутентифицированным пользователям
+
+### **2.3.3 Регистрация**
+
+#### **Описание**
+
+Позволяет создать пользователя с ролью `client` в системе
+
+#### **Адрес**
+
+```http
+POST /api/client/register
+```
+
+#### **Body параметры**
+
+```json
+{
+  "email": string,
+  "password": string,
+  "name": string,
+  "contactPhone": string
+}
+```
+
+#### **Формат ответа**
+
+```json
+{
+  "id": string,
+  "email": string,
+  "name": string
+}
+```
+
+#### **Доступ**
+
+Доступно только не аутентифицированным пользователям
+
+#### **Ошибки**
+
+- `400` - если email уже занят
+
+## 2.4 API Модуля "Управление пользователями"
+
+### **2.4.1 Создание пользователя**
+
+#### **Описание**
+
+Позволяет пользователю с ролью `admin` создать пользователя в системе
+
+#### **Адрес**
+
+```http
+POST /api/admin/users/
+```
+
+#### **Body параметры**
+
+```json
+{
+  "email": string,
+  "password": string,
+  "name": string,
+  "contactPhone": string,
+  "role": string
+}
+```
+
+#### **Формат ответа**
+
+```json
+{
+  "id": string,
+  "email": string,
+  "name": string
+}
+```
+
+#### **Доступ**
+
+Доступно только пользователям с ролью `admin`
+
+#### **Ошибки**
+
+- `401` - если пользоватьель не аутентифицирован
+- `403` - если роль пользоватьель не `admin`
+
+### **2.4.2 Получение списка пользователей**
+
+#### **Описание**
+
+Позволяет пользователю с ролью `admin` создать пользователя в системе
+
+#### **Адрес**
+
+```http
+GET /api/admin/users/
+GET /api/manager/users/
+```
+
+#### **Query параметры**
+
+- limit - количество записей в ответе
+- offset - сдвиг от начала списка
+- name - фильтр по полю
+- email - фильтр по полю
+- contactPhone - фильтр по полю
+
+#### **Формат ответа**
+
+```json
+[
+  {
+    "id": string,
+    "email": string,
+    "name": string,
+    "contactPhone": string
+  }
+]
+```
+
+#### **Доступ**
+
+```http
+GET /api/admin/users/
+```
+
+Доступно только пользователям с ролью `admin`
+
+```http
+GET /api/manager/users/
+```
+
+Доступно только пользователям с ролью `manager`
+
+#### **Ошибки**
+
+- `401` - если пользоватьель не аутентифицирован
+- `403` - если роль пользоватьель не подходит
+
+## 2.5 API модуля "Чат"
+
+### **2.5.1 Получение списка чатов для клиента**
+
+#### **Описание**
+
+Позволяет пользователю с ролью `client` получить список чатов для текущего пользователя
+
+#### **Адрес**
+
+```http
+GET /api/client/chat/
+```
+
+#### **Query параметры**
+
+- limit - количество записей в ответе
+- offset - сдвиг от начала списка
+- isActive - фильтр по полю
+
+#### **Формат ответа**
+
+```json
+[
+  {
+    "id": string,
+    "createdAt": string,
+    "isActive": string,
+    "hasNewMessages": string
+  }
+]
+```
+
+#### **Доступ**
+
+Доступно только пользователям с ролью `client`
+
+#### **Ошибки**
+
+- `401` - если пользоватьель не аутентифицирован
+- `403` - если роль пользователя не подходит
+
+### **2.5.2 Получение списка чатов для менеджера**
+
+#### **Описание**
+
+Позволяет пользователю с ролью `manager` получить список чатов
+
+#### **Адрес**
+
+```http
+GET /api/manager/chat/
+```
+
+#### **Query параметры**
+
+- limit - количество записей в ответе
+- offset - сдвиг от начала списка
+- isActive - фильтр по полю
+
+#### **Формат ответа**
+
+```json
+[
+  {
+    "id": string,
+    "createdAt": string,
+    "isActive": string,
+    "hasNewMessages": string,
+    "client": {
+      "id": string,
+      "name": string,
+      "email": string,
+      "contactPhone": string
+    }
+  }
+]
+```
+
+#### **Доступ**
+
+Доступно только пользователям с ролью `manager`
+
+#### **Ошибки**
+
+- `401` - если пользоватьель не аутентифицирован
+- `403` - если роль пользователя не подходит
+
+### **2.5.2 Получение истории в чате**
+
+#### **Описание**
+
+Позволяет пользователю с ролью `manager` или `client` историю чата через `websocket`
+
+#### **Команда**
+
+Message: `history`
+
+Payload:
+
+```json
+{ "chatId": string }
+```
+
+#### **Формат ответа**
+
+```json
+[
+  {
+    "author": {
+      "id": string,
+      "name": string
+    },
+    "text": string,
+    "sentAt": string,
+    "readAt": string
+  }
+]
+```
+
+#### **Доступ**
+
+Доступно только пользователям с ролью `manager` или `client`
+
+### **2.5.2 Отправка сообщения**
+
+#### **Описание**
+
+Позволяет пользователю с ролью `manager` или `client` отправлять сообщения в чат через `websocket`
+
+#### **Команда**
+
+Message: `message`
+
+Payload:
+
+```json
+{ "chatId": string, "text": string }
+```
+
+При отправке сообщения нужно:
+
+1. Найти чат между `author` и `receiver` по полю `Chat.users`. Если чата нет, то создать
+1. Добавить в поле `Chat.messages` новое сообщение `Message`. Поле `sentAt` должно соответствовать текущей дате
+
+#### **Формат ответа**
+
+```json
+[
+  {
+    "author": {
+      "id": string,
+      "name": string
+    },
+    "text": string,
+    "sentAt": string,
+    "readAt": string
+  }
+]
+```
+
+#### **Доступ**
+
+Доступно только пользователям с ролью `manager` или `client`
