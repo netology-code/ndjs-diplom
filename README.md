@@ -194,23 +194,23 @@ interface IReservation {
 }
 ```
 
-### 1.4 Модуль "Чат"
+### 1.4 Модуль "Чат техподдержки"
 
-Модуль "Чат" предназначается для хранения чатов и сообщений в чате.
+Модуль "Чат техподдержки" предназначается для хранения обращений в техподдержку и сообщений в чате обращения.
 
 Модуль объявлений используется функциональными модулями для реализации возможности общения пользователей.
 
 Данные чатов должны храниться в MongoDB.
 
-Модель данных чата `Chat` должна содержать следующие поля:
+Модель данных чата `SupportRequest` должна содержать следующие поля:
 
-| название  |           тип            | обязательное | уникальное |
-| --------- | :----------------------: | :----------: | :--------: |
-| \_id      |        `ObjectId`        |      да      |     да     |
-| users     | [`ObjectId`, `ObjectId`] |      да      |    нет     |
-| createdAt |          `Date`          |      да      |    нет     |
-| messages  |       `Message[]`        |     нет      |    нет     |
-| isActive  |          `bool`          |     нет      |    нет     |
+| название  |     тип     | обязательное | уникальное |
+| --------- | :---------: | :----------: | :--------: |
+| \_id      | `ObjectId`  |      да      |     да     |
+| user      | `ObjectId`  |      да      |    нет     |
+| createdAt |   `Date`    |      да      |    нет     |
+| messages  | `Message[]` |     нет      |    нет     |
+| isActive  |   `bool`    |     нет      |    нет     |
 
 Модель сообщения `Message` должна содержать следующие поля:
 
@@ -226,13 +226,23 @@ interface IReservation {
 
 ---
 
-Модуль "Чат" должен быть реализован в виде NestJS модуля и экспортировать сервисы со следующими интерфейсами:
+Модуль "Чат техподдержки" должен быть реализован в виде NestJS модуля и экспортировать сервисы со следующими интерфейсами:
 
 ```ts
+interface CreateSupportRequestDto {
+  user: ID;
+  text: string;
+}
+
 interface SendMessageDto {
   author: ID;
-  chat: ID;
+  supportRequest: ID;
   text: string;
+}
+interface MarkMessagesAsReadDto {
+  user: ID;
+  supportRequest: ID;
+  createdBefore: Date;
 }
 
 interface GetChatListParams {
@@ -240,20 +250,36 @@ interface GetChatListParams {
   isActive: bool;
 }
 
-interface IChat {
-  findChatBetween(users: [ID, ID]): Promise<Chat | null>;
-  findChatList(params: GetChatListParams): Promise<Chat | null>;
+interface ISupportRequestService {
+  findSupportRequests(params: GetChatListParams): Promise<SupportRequest[]>;
   sendMessage(data: SendMessageDto): Promise<Message>;
-  getHistory(chatId: ID): Promise<Message[]>;
-  getUnreadCount(chatId: ID, userId: ID): Promise<Message[]>;
-  closeChat(chatId: ID): Promise<void>;
-  subscribe(handler: (chat: Chat, message: Message) => void): () => void;
+  getMessages(supportRequest: ID): Promise<Message[]>;
+  subscribe(
+    handler: (supportRequest: SupportRequest, message: Message) => void
+  ): () => void;
+}
+
+interface ISupportRequestClientService {
+  createSupportRequest(data: CreateSupportRequestDto): Promise<SupportRequest>;
+  markMessagesAsRead(params: MarkMessagesAsReadDto);
+  getUnreadCount(supportRequest: ID): Promise<Message[]>;
+}
+
+interface ISupportRequestEmployeeService {
+  markMessagesAsRead(params: MarkMessagesAsReadDto);
+  getUnreadCount(supportRequest: ID): Promise<Message[]>;
+  closeRequest(supportRequest: ID): Promise<void>;
 }
 ```
 
 ---
 
-1. Оповещения в должны быть реализованы через механизм `EventEmitter`
+1. Метод `ISupportRequestClientService.getUnreadCount` должен возвращать количество сообщений, которые были отправлены любым сотрудником поддержки и не отмечены прочитаным
+2. Метод `ISupportRequestClientService.markMessagesAsRead` должен выставлять текущую дату в поле readAt всем сообщениям, которые не были прочитаны и были отправлены не пользователем
+3. Метод `ISupportRequestEmployeeService.getUnreadCount` должен возвращать количество сообщений, которые были отправлены пользователем и не отмечены прочитаным
+4. Метод `ISupportRequestEmployeeService.markMessagesAsRead` должен выставлять текущую дату в поле readAt всем сообщениям, которые не были прочитаны и были отправлены пользователем
+5. Метод `ISupportRequestEmployeeService.closeRequest` должен менять флаг `isActive` на `false`
+6. Оповещения в должны быть реализованы через механизм `EventEmitter`
 
 ## 2. Описание модулей WEB API
 
@@ -959,25 +985,27 @@ GET /api/manager/users/
 - `401` - если пользоватьель не аутентифицирован
 - `403` - если роль пользоватьель не подходит
 
-## 2.5 API модуля "Чат"
+## 2.5 API модуля "Чат с техподдрежкой"
 
-### **2.5.1 Получение списка чатов для клиента**
+### **2.5.1 Создание обращения в поддержку**
 
 #### **Описание**
 
-Позволяет пользователю с ролью `client` получить список чатов для текущего пользователя
+Позволяет пользователю с ролью `client` создать обращение в техподдержку
 
 #### **Адрес**
 
 ```http
-GET /api/client/chat/
+POST /api/client/support-requests/
 ```
 
-#### **Query параметры**
+#### **Body параметры**
 
-- limit - количество записей в ответе
-- offset - сдвиг от начала списка
-- isActive - фильтр по полю
+```json
+{
+  "text": string
+}
+```
 
 #### **Формат ответа**
 
@@ -986,8 +1014,8 @@ GET /api/client/chat/
   {
     "id": string,
     "createdAt": string,
-    "isActive": string,
-    "hasNewMessages": string
+    "isActive": boolean,
+    "hasNewMessages": boolean
   }
 ]
 ```
@@ -1001,16 +1029,16 @@ GET /api/client/chat/
 - `401` - если пользоватьель не аутентифицирован
 - `403` - если роль пользователя не подходит
 
-### **2.5.2 Получение списка чатов для менеджера**
+### **2.5.2 Получение списка обращений в поддержку для клиента**
 
 #### **Описание**
 
-Позволяет пользователю с ролью `manager` получить список чатов
+Позволяет пользователю с ролью `client` получить список обращений для текущего пользователя
 
 #### **Адрес**
 
 ```http
-GET /api/manager/chat/
+GET /api/client/support-requests/
 ```
 
 #### **Query параметры**
@@ -1026,8 +1054,48 @@ GET /api/manager/chat/
   {
     "id": string,
     "createdAt": string,
-    "isActive": string,
-    "hasNewMessages": string,
+    "isActive": boolean,
+    "hasNewMessages": boolean
+  }
+]
+```
+
+#### **Доступ**
+
+Доступно только пользователям с ролью `client`
+
+#### **Ошибки**
+
+- `401` - если пользоватьель не аутентифицирован
+- `403` - если роль пользователя не подходит
+
+### **2.5.3 Получение списка обращений в поддержку для менеджера**
+
+#### **Описание**
+
+Позволяет пользователю с ролью `manager` получить список обращений от клиентов
+
+#### **Адрес**
+
+```http
+GET /api/manager/support-requests/
+```
+
+#### **Query параметры**
+
+- limit - количество записей в ответе
+- offset - сдвиг от начала списка
+- isActive - фильтр по полю
+
+#### **Формат ответа**
+
+```json
+[
+  {
+    "id": string,
+    "createdAt": string,
+    "isActive": boolean,
+    "hasNewMessages": boolean,
     "client": {
       "id": string,
       "name": string,
@@ -1047,20 +1115,16 @@ GET /api/manager/chat/
 - `401` - если пользоватьель не аутентифицирован
 - `403` - если роль пользователя не подходит
 
-### **2.5.3 Получение истории в чате**
+### **2.5.4 Получение истории сообщений обращения в техподдержку**
 
 #### **Описание**
 
-Позволяет пользователю с ролью `manager` или `client` историю чата через `websocket`
+Позволяет пользователю с ролью `manager` или `client` получить все сообщения из чата
 
-#### **Команда**
+#### **Адрес**
 
-Message: `history`
-
-Payload:
-
-```json
-{ "chatId": string }
+```http
+GET /api/common/support-requests/:id/messages
 ```
 
 #### **Формат ответа**
@@ -1068,61 +1132,139 @@ Payload:
 ```json
 [
   {
+    "id": string,
+    "createdAt": string,
+    "text": string,
+    "readAt": string,
     "author": {
       "id": string,
       "name": string
-    },
-    "text": string,
-    "sentAt": string,
-    "readAt": string
+    }
   }
 ]
 ```
 
 #### **Доступ**
 
-Доступно только пользователям с ролью `manager` или `client`
+Доступно только пользователям с ролью `manager` и пользователю с ролью `client`, который создал обращение
 
-### **2.5.4 Отправка сообщения**
+#### **Ошибки**
+
+- `401` - если пользоватьель не аутентифицирован
+- `403` - если роль пользователя не подходит
+
+### **2.5.5 Отправка сообщения**
 
 #### **Описание**
 
-Позволяет пользователю с ролью `manager` или `client` отправлять сообщения в чат через `websocket`
+Позволяет пользователю с ролью `manager` или `client` отправлять сообщения в чат
 
-#### **Команда**
+#### **Адрес**
 
-Message: `message`
-
-Payload:
-
-```json
-{ "chatId": string, "text": string }
+```http
+POST /api/common/support-requests/:id/messages
 ```
 
-При отправке сообщения нужно:
+#### **Body параметры**
 
-1. Найти чат между `author` и `receiver` по полю `Chat.users`. Если чата нет, то создать
-1. Добавить в поле `Chat.messages` новое сообщение `Message`. Поле `sentAt` должно соответствовать текущей дате
+```json
+{
+  "text": string
+}
+```
 
 #### **Формат ответа**
 
 ```json
 [
   {
+    "id": string,
+    "createdAt": string,
+    "text": string,
+    "readAt": string,
     "author": {
       "id": string,
       "name": string
-    },
-    "text": string,
-    "sentAt": string,
-    "readAt": string
+    }
   }
 ]
 ```
 
 #### **Доступ**
 
-Доступно только пользователям с ролью `manager` или `client`
+Доступно только пользователям с ролью `manager` и пользователю с ролью `client`, который создал обращение
+
+#### **Ошибки**
+
+- `401` - если пользоватьель не аутентифицирован
+- `403` - если роль пользователя не подходит
+
+### **2.5.6 Отправка события, что сообщения прочитаны**
+
+#### **Описание**
+
+Позволяет пользователю с ролью `manager` или `client` отправлять отметку, что сообщения прочитаны
+
+#### **Адрес**
+
+```http
+POST /api/common/support-requests/:id/messages/read
+```
+
+#### **Body параметры**
+
+```json
+{
+  "createdBefore": string
+}
+```
+
+#### **Формат ответа**
+
+```json
+{
+  "success": true
+}
+```
+
+#### **Доступ**
+
+Доступно только пользователям с ролью `manager` и пользователю с ролью `client`, который создал обращение
+
+#### **Ошибки**
+
+- `401` - если пользоватьель не аутентифицирован
+- `403` - если роль пользователя не подходит
+
+### **2.5.8 Подписка на сообщения из чата техподдержки**
+
+#### **Описание**
+
+Позволяет пользователю с ролью `manager` или `client` получать новые сообщения в чате через websocket
+
+#### **Команда**
+
+message: subscribeToChat
+payload: chatId
+
+#### **Формат ответа**
+
+```json
+{
+  "id": string,
+  "createdAt": string,
+  "text": string,
+  "readAt": string,
+  "author": {
+    "id": string,
+    "name": string
+  }
+}
+```
+
+#### **Доступ**
+
+Доступно только пользователям с ролью `manager` и пользователю с ролью `client`, который создал обращение
 
 ## Запуск приложения
 
