@@ -194,6 +194,8 @@ interface IReservation {
 }
 ```
 
+1. Метод `IReservation.addReservation` должен проверять доступен ли номер на заданную дату
+
 ### 1.4 Модуль "Чат техподдержки"
 
 Модуль "Чат техподдержки" предназначается для хранения обращений в техподдержку и сообщений в чате обращения.
@@ -812,7 +814,6 @@ POST /api/auth/login
 ```json
 {
   "email": string,
-  "password": string,
   "name": string,
   "contactPhone": string
 }
@@ -919,7 +920,9 @@ POST /api/admin/users/
 {
   "id": string,
   "email": string,
-  "name": string
+  "name": string,
+  "contactPhone": string,
+  "role": string
 }
 ```
 
