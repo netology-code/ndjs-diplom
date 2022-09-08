@@ -13,10 +13,10 @@
 
 ## Технологический стек
 
-- Node.js
-- Nest.js
-- MongoDB
-- WebSocket
+- Node.js,
+- Nest.js,
+- MongoDB,
+- WebSocket.
 
 ## Допущения
 
@@ -305,7 +305,7 @@ interface ISupportRequestEmployeeService {
 GET /api/common/hotel-rooms
 ```
 
-#### **Query параметры**
+#### **Query-параметры**
 
 - limit — количество записей в ответе;
 - offset — сдвиг от начала списка;
@@ -365,7 +365,7 @@ GET /api/common/hotel-rooms/:id
 
 #### **Доступ**
 
-Доступно всем пользователям, включая не аутентифицированных.
+Доступно всем пользователям, включая неаутентифицированных.
 
 ### **2.1.3. Добавление гостиницы.**
 
@@ -546,7 +546,7 @@ PUT /api/admin/hotel-rooms/:id
 
 #### **Body-параметры**
 
-Данный запрос предполагает загрузку файлов и дожен использовать формат `multipart/form-data`.
+Этот запрос предполагает загрузку файлов и дожен использовать формат `multipart/form-data`.
 
 ```form-data
 title: string
