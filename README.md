@@ -497,7 +497,7 @@ POST /api/admin/hotel-rooms/
 
 #### **Body-параметры**
 
-Данный запрос предполагает загрузку файлов и должен использовать формат `multipart/form-data`.
+Этот запрос предполагает загрузку файлов и должен использовать формат `multipart/form-data`.
 
 ```form-data
 title: string
