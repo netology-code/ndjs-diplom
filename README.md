@@ -24,7 +24,7 @@
 
 ## Глоссарий
 
-В этом документе приводятся описания разных интерфейсов и типов. Для упрощения описания в этом разделе приводятся общие типы.
+В документе приводятся описания разных интерфейсов и типов. Для упрощения описания в этом разделе приводятся общие типы.
 
 ```ts
 type ID = string | ObjectId;
@@ -329,7 +329,7 @@ GET /api/common/hotel-rooms
 
 #### **Доступ**
 
-Доступно всем пользователям, включая не аутентифицированных.
+Доступно всем пользователям, включая неаутентифицированных.
 
 ### **2.1.2. Информация о конкретном номере.**
 
@@ -343,7 +343,7 @@ GET /api/common/hotel-rooms
 GET /api/common/hotel-rooms/:id
 ```
 
-#### **Query параметры**
+#### **Query-параметры**
 
 Отсутствуют.
 
@@ -379,7 +379,7 @@ GET /api/common/hotel-rooms/:id
 POST /api/admin/hotels/
 ```
 
-#### **Body параметры**
+#### **Body-параметры**
 
 ```json
 {
@@ -419,7 +419,7 @@ POST /api/admin/hotels/
 GET /api/admin/hotels/
 ```
 
-#### **Query параметры**
+#### **Query-параметры**
 
 - limit - количество записей в ответе;
 - offset - сдвиг от начала списка.
@@ -455,7 +455,7 @@ GET /api/admin/hotels/
 PUT /api/admin/hotels/:id
 ```
 
-#### **Body параметры**
+#### **Body-параметры**
 
 ```json
 {
@@ -495,7 +495,7 @@ PUT /api/admin/hotels/:id
 POST /api/admin/hotel-rooms/
 ```
 
-#### **Body параметры**
+#### **Body-параметры**
 
 Данный запрос предполагает загрузку файлов и должен использовать формат `multipart/form-data`.
 
@@ -544,7 +544,7 @@ images[]: File
 PUT /api/admin/hotel-rooms/:id
 ```
 
-#### **Body параметры**
+#### **Body-параметры**
 
 Данный запрос предполагает загрузку файлов и дожен использовать формат `multipart/form-data`.
 
@@ -602,7 +602,7 @@ images[]: File | string
 POST /api/client/reservations
 ```
 
-#### **Body параметры**
+#### **Body-параметры**
 
 ```json
 {
@@ -800,7 +800,7 @@ DELETE /api/manager/reservations/:userId/:reservationId
 POST /api/auth/login
 ```
 
-#### **Body параметры**
+#### **Body-параметры**
 
 ```json
 {
@@ -859,7 +859,7 @@ POST /api/auth/logout
 POST /api/client/register
 ```
 
-#### **Body параметры**
+#### **Body-параметры**
 
 ```json
 {
@@ -902,7 +902,7 @@ POST /api/client/register
 POST /api/admin/users/
 ```
 
-#### **Body параметры**
+#### **Body-параметры**
 
 ```json
 {
@@ -948,7 +948,7 @@ GET /api/admin/users/
 GET /api/manager/users/
 ```
 
-#### **Query параметры**
+#### **Query-параметры**
 
 - limit - количество записей в ответе;
 - offset - сдвиг от начала списка;
@@ -1002,7 +1002,7 @@ GET /api/manager/users/
 POST /api/client/support-requests/
 ```
 
-#### **Body параметры**
+#### **Body-параметры**
 
 ```json
 {
@@ -1044,7 +1044,7 @@ POST /api/client/support-requests/
 GET /api/client/support-requests/
 ```
 
-#### **Query параметры**
+#### **Query-параметры**
 
 - limit - количество записей в ответе;
 - offset - сдвиг от начала списка;
@@ -1084,7 +1084,7 @@ GET /api/client/support-requests/
 GET /api/manager/support-requests/
 ```
 
-#### **Query параметры**
+#### **Query-параметры**
 
 - limit - количество записей в ответе;
 - offset - сдвиг от начала списка;
@@ -1168,7 +1168,7 @@ GET /api/common/support-requests/:id/messages
 POST /api/common/support-requests/:id/messages
 ```
 
-#### **Body параметры**
+#### **Body-параметры**
 
 ```json
 {
@@ -1214,7 +1214,7 @@ POST /api/common/support-requests/:id/messages
 POST /api/common/support-requests/:id/messages/read
 ```
 
-#### **Body параметры**
+#### **Body-параметры**
 
 ```json
 {
