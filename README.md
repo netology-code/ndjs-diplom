@@ -13,9 +13,9 @@
 
 ## Технологический стек
 
-- Node.js,
-- Nest.js,
-- MongoDB,
+- Node.js;
+- Nest.js;
+- MongoDB;
 - WebSocket.
 
 ## Допущения
