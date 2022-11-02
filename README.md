@@ -317,7 +317,7 @@ GET /api/common/hotel-rooms
 [
   {
     "id": string,
-    "title": string,
+    "description": string,
     "images": [string],
     "hotel": {
       "id": string,
