@@ -128,7 +128,7 @@ interface SearchRoomsParams {
   limit: number;
   offset: number;
   title: string;
-  isEnabled?: true;
+  isEnabled?: boolean;
 }
 
 interface HotelRoomService {
@@ -142,7 +142,7 @@ interface HotelRoomService {
 В методах `findById` и `search` флаг `isEnabled` может принимать только эти значения:
 
 - `true` — флаг должен использоваться в фильтрации;
-- `undefined` — флаг должен игнорироваться.
+- `undefined` — если не передан параметр, флаг должен игнорироваться.
 
 ### 1.3. Модуль «Брони»
 
