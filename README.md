@@ -352,7 +352,6 @@ GET /api/common/hotel-rooms/:id
 ```json
 {
   "id": string,
-  "title": string,
   "description": string,
   "images": [string],
   "hotel": {
@@ -500,7 +499,6 @@ POST /api/admin/hotel-rooms/
 Этот запрос предполагает загрузку файлов и должен использовать формат `multipart/form-data`.
 
 ```form-data
-title: string
 description: string
 hotelId: string
 images[]: File
@@ -511,7 +509,6 @@ images[]: File
 ```json
 {
   "id": string,
-  "title": string,
   "description": string,
   "images": [string],
   "isEnabled": boolean,
@@ -549,7 +546,6 @@ PUT /api/admin/hotel-rooms/:id
 Этот запрос предполагает загрузку файлов и дожен использовать формат `multipart/form-data`.
 
 ```form-data
-title: string
 description: string
 hotelId: string
 isEnabled: boolean
@@ -565,7 +561,6 @@ images[]: File | string
 ```json
 {
   "id": string,
-  "title": string,
   "description": string,
   "images": [string],
   "isEnabled": boolean,
@@ -619,7 +614,6 @@ POST /api/client/reservations
   "startDate": string,
   "endDate": string,
   "hotelRoom": {
-    "title": string,
     "description": string,
     "images": [string]
   },
@@ -660,7 +654,6 @@ GET /api/client/reservations
     "startDate": string,
     "endDate": string,
     "hotelRoom": {
-      "title": string,
       "description": string,
       "images": [string]
     },
@@ -728,7 +721,6 @@ GET /api/manager/reservations/:userId
     "startDate": string,
     "endDate": string,
     "hotelRoom": {
-      "title": string,
       "description": string,
       "images": [string]
     },
