@@ -118,16 +118,28 @@ interface IUserService {
 Модуль «Гостиницы» должен быть реализован в виде NestJS-модуля и экспортировать сервисы с интерфейсами:
 
 ```ts
+interface SearchHotelParams {
+  limit: number;
+  offset: number;
+  title: string;
+}
+
+interface UpdateHotelParams {
+  title: string;
+  description: string;
+}
+
 interface IHotelService {
   create(data: any): Promise<Hotel>;
   findById(id: ID): Promise<Hotel>;
-  search(params: Pick<Hotel, "title">): Promise<Hotel[]>;
+  search(params: SearchHotelParams): Promise<Hotel[]>;
+  update(id: ID, data: UpdateHotelParams): Promise<Hotel>;
 }
 
 interface SearchRoomsParams {
   limit: number;
   offset: number;
-  title: string;
+  hotel: ID;
   isEnabled?: boolean;
 }
 
@@ -173,15 +185,15 @@ interface HotelRoomService {
 
 ```ts
 interface ReservationDto {
-  user: ID;
-  hotel: ID;
-  room: ID;
+  userId: ID;
+  hotelId: ID;
+  roomId: ID;
   dateStart: Date;
   dateEnd: Date;
 }
 
 interface ReservationSearchOptions {
-  user: ID;
+  userId: ID;
   dateStart: Date;
   dateEnd: Date;
 }
@@ -533,7 +545,7 @@ images[]: File
 
 #### **Описание**
 
-Изменение описания гостиницы администратором.
+Изменение описания номера гостиницы администратором.
 
 #### **Адрес**
 
@@ -745,12 +757,12 @@ GET /api/manager/reservations/:userId
 
 #### **Описание**
 
-Отменяет бронь пользователя.
+Отменяет бронь пользователя по id брони.
 
 #### **Адрес**
 
 ```http
-DELETE /api/manager/reservations/:userId/:reservationId
+DELETE /api/manager/reservations/:id
 ```
 
 #### **Формат ответа**
@@ -765,7 +777,7 @@ DELETE /api/manager/reservations/:userId/:reservationId
 
 - `401` - если пользователь не аутентифицирован;
 - `403` - если роль пользователя не `manager`;
-- `400` - если брони для пользователя с указанным ID не существует.
+- `400` - если брони с указанным ID не существует.
 
 ## 2.3. API Модуля «Аутентификация и авторизация»
 
