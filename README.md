@@ -145,13 +145,13 @@ interface SearchRoomsParams {
 
 interface HotelRoomService {
   create(data: Partial<HotelRoom>): Promise<HotelRoom>;
-  findById(id: ID, isEnabled?: true): Promise<HotelRoom>;
+  findById(id: ID): Promise<HotelRoom>;
   search(params: SearchRoomsParams): Promise<HotelRoom[]>;
   update(id: ID, data: Partial<HotelRoom>): Promise<HotelRoom>;
 }
 ```
 
-В методах `findById` и `search` флаг `isEnabled` может принимать только эти значения:
+В методе `search` флаг `isEnabled` может принимать только boolean значения или может быть не передан, тогда должны вернутся все записи:
 
 - `true` — флаг должен использоваться в фильтрации;
 - `undefined` — если не передан параметр, флаг должен игнорироваться.
