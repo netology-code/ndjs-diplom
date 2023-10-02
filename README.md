@@ -276,12 +276,12 @@ interface ISupportRequestService {
 interface ISupportRequestClientService {
   createSupportRequest(data: CreateSupportRequestDto): Promise<SupportRequest>;
   markMessagesAsRead(params: MarkMessagesAsReadDto);
-  getUnreadCount(supportRequest: ID): Promise<Message[]>;
+  getUnreadCount(supportRequest: ID): Promise<number>;
 }
 
 interface ISupportRequestEmployeeService {
   markMessagesAsRead(params: MarkMessagesAsReadDto);
-  getUnreadCount(supportRequest: ID): Promise<Message[]>;
+  getUnreadCount(supportRequest: ID): Promise<number>;
   closeRequest(supportRequest: ID): Promise<void>;
 }
 ```
