@@ -94,7 +94,7 @@ interface IUserService {
 | Название    |    Тип     | Обязательное | Уникальное | По умолчанию |
 | ----------- | :--------: | :----------: | :--------: | :----------: |
 | \_id        | `ObjectId` |      да      |     да     |              |
-| title       | `ObjectId` |      да      |    нет     |              |
+| title       | `string`   |      да      |     да     |              |
 | description |  `string`  |     нет      |    нет     |              |
 | createdAt   |   `Date`   |      да      |    нет     |              |
 | updatedAt   |   `Date`   |      да      |    нет     |              |
